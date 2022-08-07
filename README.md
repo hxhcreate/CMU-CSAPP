@@ -24,3 +24,10 @@ other branches
 
 > all the lab implemented myself
 
+## Lab Env
+1. set up linux
+you have two choices, one is for vmware station, and another is use wsl in windown
+2. software
+   > $ sudo apt install build-essential gcc-multilib gdb
+
+
