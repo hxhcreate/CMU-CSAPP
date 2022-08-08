@@ -1,7 +1,7 @@
 /* 
  * CS:APP Data Lab 
  * 
- * <Please put your name and userid here>
+ * hxh
  * 
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
@@ -143,7 +143,7 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return 2;
+  return ~(~x & ~y) & ~(x & y);
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -153,7 +153,7 @@ int bitXor(int x, int y) {
  */
 int tmin(void) {
 
-  return 2;
+  return 0x1 << 31;
 
 }
 //2
@@ -165,7 +165,13 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 2;
+  int tmp = x + 1;
+  x = x + tmp;
+  x = ~x;
+
+  tmp = !tmp; //exclude 0x111..
+  x += tmp;
+  return !x;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -176,7 +182,9 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+  int mask = (0xAA << 8) + 0xAA;
+  mask = mask + (mask << 16);
+  return !((mask & x) ^ mask);
 }
 /* 
  * negate - return -x 
@@ -186,7 +194,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~x + 1;
 }
 //3
 /* 
@@ -199,7 +207,13 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+  int sign = 0x1<<31;
+  int upperBound = ~(sign | 0x39);
+  int lowerBound = ~0x30 + 1;
+  upperBound = 0x1 & ((upperBound + x)>>31);
+  lowerBound = 0x1 & ((lowerBound + x)>>31);
+  return !(upperBound | lowerBound);
+  
 }
 /* 
  * conditional - same as x ? y : z 
@@ -209,7 +223,9 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  x = !!x;  //reduced to 0 or 1
+  x = ~x + 1;  //negate if x = 1 then x = 1111... else 000000....
+  return (x & y) | (~x & z);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -219,7 +235,14 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int negX = ~x + 1;
+  int addX  = negX + y;  // y- x
+  int checkSign = addX >> 31 & 1;  // sign number
+  int Tmin = 0x1 << 31;  // 1000...
+  int xSign = x & Tmin;
+  int ySign = y & Tmin;
+
+  
 }
 //4
 /* 
