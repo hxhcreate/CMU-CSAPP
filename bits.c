@@ -239,9 +239,11 @@ int isLessOrEqual(int x, int y) {
   int addX  = negX + y;  // y- x
   int checkSign = addX >> 31 & 1;  // sign number
   int Tmin = 0x1 << 31;  // 1000...
-  int xSign = x & Tmin;
-  int ySign = y & Tmin;
-
+  int xSign = (x & Tmin);
+  int ySign = (y & Tmin);
+  int bitXor = xSign ^ ySign;
+  bitXor = (bitXor>>31) & 0x1; // same then 0  else 1
+  return ((!bitXor) & (!checkSign)) | (bitXor & (xSign>>31));  // 1.同号 and 相减>0 2. 异号且 x > 0
   
 }
 //4
@@ -254,7 +256,12 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
+  /*
+  逻辑非就是非0为1，非非0为0。利用其补码（取反加一）的性质，除了0和最小数（符号位为1，其余为0），
+  外其他数都是互为相反数关系（符号位取位或为1）。0和最小数的补码是本身，不过0的符号位与其补码符号位位或为0，最小数的为1。利用这一点得到解决方法。
+  */
+ return ((x | (~x + 1)) >> 31)  + 1;
+  
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -269,7 +276,22 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 0;
+  // find the core lies in that to find the highest 1 in x (0 for x < 0)
+  int b16, b8, b4, b2, b1, b0;
+  int sign = x >> 31;
+  x = (sign & ~x) | (~sign & x); // x > 0 then x else ~x  
+  b16 = (!!(x>>16))<<4; // 高十六位是否有1
+  x = x>>b16;
+  b8 = (!!(x>>8))<<3;
+  x = x>>b8;
+  b4 = (!!(x>>4))<<2;
+  x = x>>b4;
+  b2 = !!(x>>2)<<1;
+  x = x>>b2;
+  b1 = !!(x>>1);
+  x = x>>b1;
+  b0 = x;
+  return b16+b8+b4+b2+b1+b0+1;
 }
 //float
 /* 
@@ -284,7 +306,17 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  int exp = (uf & 0x7f800000) >> 23;
+  int sign = uf & (0x1 << 31);
+  if (exp == 0)   // denormalized
+    return uf << 1 | sign;
+  if (exp == 0xff) // NaN or 无穷
+    return uf;
+  exp++;
+  if (exp == 0xff) // 乘2之后只能变为无穷了
+    return 0x7f800000 | sign;
+  return (exp << 23) | (uf & 0x807fffff);
+
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -299,7 +331,27 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+    int s_    = uf>>31;
+    int exp_  = ((uf&0x7f800000)>>23)-127;
+    int frac_ = (uf&0x007fffff)|0x00800000;
+    if(!(uf&0x7fffffff)) return 0;
+    if (exp_ > 31) 
+      return 0x80000000u;
+    if (exp_ < 0)
+      return 0;
+    if (exp_ > 23)
+      frac_ <<= (exp_ - 23);
+    else 
+      frac_ >>= (23 - exp_);
+    
+    if (!((frac_ >> 31) ^s_)) // judge is overflowed!!!! throuth the sign number is changed
+      return frac_;
+// 与原符号不相同
+    else if(frac_ >> 31)   // 负
+      return 0x80000000u;
+    else                    // 正
+      return ~frac_ + 1;    // not quite understand!
+    
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -315,5 +367,9 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+  int INF = 0xff<<23;
+  int exp = x + 127;
+  if(exp <= 0) return 0;
+  if(exp >= 255) return INF;
+  return exp << 23;
 }
